@@ -61,7 +61,7 @@ public class MainFrame extends JFrame {
 		getContentPane().add(panel, gbc_panel);
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-		JLabel lblNewLabel = new JLabel("Enter DOI or URL: ");
+		JLabel lblNewLabel = new JLabel("Enter DOI or DOI URL: ");
 		lblNewLabel.setFont(new Font("Microsoft YaHei UI", Font.PLAIN, 16));
 		panel.add(lblNewLabel);
 
