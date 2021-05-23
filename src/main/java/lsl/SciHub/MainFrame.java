@@ -115,6 +115,8 @@ public class MainFrame extends JFrame {
 
 				new Thread(new Runnable() {
 
+					String fileName = "";
+
 					@Override
 					public void run() {
 
@@ -123,7 +125,14 @@ public class MainFrame extends JFrame {
 						String doiString = doitextField.getText().trim();
 						String urlString = sciHubURL + doiString;
 
-						String fileName = doiString.split("/")[1] + ".pdf";
+						if (doiString.startsWith("https")) {
+
+							int begin = doiString.lastIndexOf("/");
+							fileName = doiString.substring(begin + 1, doiString.length()) + ".pdf";
+							System.out.println(fileName);
+						} else {
+							fileName = doiString.split("/")[1] + ".pdf";
+						}
 
 						String htmlString = HttpUtil.get(urlString);
 
