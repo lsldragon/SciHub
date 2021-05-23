@@ -16,6 +16,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -25,6 +26,8 @@ import javax.swing.border.LineBorder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+
+import com.alee.utils.jar.JarEntry;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.StreamProgress;
@@ -120,54 +123,61 @@ public class MainFrame extends JFrame {
 					@Override
 					public void run() {
 
-						infoTextArea.append("\ndownloading website source code...\n");
+						try {
 
-						String doiString = doitextField.getText().trim();
-						String urlString = sciHubURL + doiString;
+							infoTextArea.append("\ndownloading website source code...\n");
 
-						if (doiString.startsWith("https")) {
+							String doiString = doitextField.getText().trim();
+							String urlString = sciHubURL + doiString;
 
-							int begin = doiString.lastIndexOf("/");
-							fileName = doiString.substring(begin + 1, doiString.length()) + ".pdf";
-							System.out.println(fileName);
-						} else {
-							fileName = doiString.split("/")[1] + ".pdf";
+							if (doiString.startsWith("https")) {
+
+								int begin = doiString.lastIndexOf("/");
+								fileName = doiString.substring(begin + 1, doiString.length()) + ".pdf";
+								System.out.println(fileName);
+							} else {
+								fileName = doiString.split("/")[1] + ".pdf";
+							}
+
+							String htmlString = HttpUtil.get(urlString);
+
+							infoTextArea.append("analysing url...\n");
+							Document document = Jsoup.parse(htmlString);
+							Elements elements = document.select("#menu #buttons ul li a");
+							String _downloadURLString = elements.attr("onclick");
+							int first_symble = _downloadURLString.indexOf("=") + 2;
+							int length = _downloadURLString.length() - 1;
+
+							String downloadURLString = _downloadURLString.substring(first_symble, length);
+							String downloadURL = downloadURLString.replaceAll("\\\\", "");
+
+							HttpUtil.downloadFile(downloadURL, new File(fileName), new StreamProgress() {
+
+								@Override
+								public void start() {
+									infoTextArea.append("donwloading .... \n");
+
+									infoTextArea.setCaretPosition(infoTextArea.getText().length());
+								}
+
+								@Override
+								public void progress(long progressSize) {
+									infoTextArea.append("已下载" + ": " + FileUtil.readableFileSize(progressSize) + "\n");
+									infoTextArea.setCaretPosition(infoTextArea.getText().length());
+								}
+
+								@Override
+								public void finish() {
+									infoTextArea.append("finished ... \n");
+									infoTextArea.append("文件名: " + fileName);
+									infoTextArea.setCaretPosition(infoTextArea.getText().length());
+								}
+							});
+
+						} catch (Exception e2) {
+							JOptionPane.showMessageDialog(null, e2.getMessage() + "\n Paper can't be downloaded !!!",
+									"ERROR", JOptionPane.WARNING_MESSAGE);
 						}
-
-						String htmlString = HttpUtil.get(urlString);
-
-						infoTextArea.append("analysing url...\n");
-						Document document = Jsoup.parse(htmlString);
-						Elements elements = document.select("#menu #buttons ul li a");
-						String _downloadURLString = elements.attr("onclick");
-						int first_symble = _downloadURLString.indexOf("=") + 2;
-						int length = _downloadURLString.length() - 1;
-
-						String downloadURLString = _downloadURLString.substring(first_symble, length);
-						String downloadURL = downloadURLString.replaceAll("\\\\", "");
-
-						HttpUtil.downloadFile(downloadURL, new File(fileName), new StreamProgress() {
-
-							@Override
-							public void start() {
-								infoTextArea.append("donwloading .... \n");
-
-								infoTextArea.setCaretPosition(infoTextArea.getText().length());
-							}
-
-							@Override
-							public void progress(long progressSize) {
-								infoTextArea.append("已下载" + ": " + FileUtil.readableFileSize(progressSize) + "\n");
-								infoTextArea.setCaretPosition(infoTextArea.getText().length());
-							}
-
-							@Override
-							public void finish() {
-								infoTextArea.append("finished ... \n");
-								infoTextArea.append("文件名: " + fileName);
-								infoTextArea.setCaretPosition(infoTextArea.getText().length());
-							}
-						});
 					}
 				}).start();
 			}
